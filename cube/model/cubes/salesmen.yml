@@ -1,0 +1,55 @@
+cubes:
+  - name: salesmen
+    sql_table: public.salesmen
+    description: Sales associates assigned to a department.
+
+    joins:
+      - name: departments
+        relationship: many_to_one
+        sql: "{CUBE.department_id} = {departments.id}"
+
+    dimensions:
+      - name: id
+        sql: salesman_id
+        type: number
+        primary_key: true
+        public: true
+
+      - name: department_id
+        sql: department_id
+        type: number
+
+      - name: full_name
+        sql: "first_name || ' ' || last_name"
+        type: string
+
+      - name: first_name
+        sql: first_name
+        type: string
+
+      - name: last_name
+        sql: last_name
+        type: string
+
+      - name: email
+        sql: email
+        type: string
+
+      - name: hired_at
+        sql: hired_at
+        type: time
+
+      - name: is_active
+        sql: is_active
+        type: boolean
+
+    measures:
+      - name: count
+        type: count
+        description: Total salesmen on record.
+
+      - name: active_count
+        type: count
+        description: Salesmen currently flagged active.
+        filters:
+          - sql: "{CUBE.is_active} = TRUE"

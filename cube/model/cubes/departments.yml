@@ -1,0 +1,28 @@
+cubes:
+  - name: departments
+    sql_table: public.departments
+    description: Top-level merchandising and staffing groups.
+
+    dimensions:
+      - name: id
+        sql: department_id
+        type: number
+        primary_key: true
+        public: true
+
+      - name: name
+        sql: name
+        type: string
+
+      - name: description
+        sql: description
+        type: string
+
+      - name: created_at
+        sql: created_at
+        type: time
+
+    measures:
+      - name: count
+        type: count
+        description: Number of departments.

@@ -1,0 +1,26 @@
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Docker volumes (defensive – we use named volumes, but just in case)
+postgres-data/
+.cube-data/
+
+# Cube Store embedded metastore (runtime state under cube/.cubestore)
+cube/.cubestore/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Agent tooling artefacts
+agent-tools/

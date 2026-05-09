@@ -1,0 +1,46 @@
+cubes:
+  - name: product_costs
+    sql_table: public.product_costs
+    description: Time-ranged unit cost history per product (SCD2 lite).
+
+    joins:
+      - name: products
+        relationship: many_to_one
+        sql: "{CUBE.product_id} = {products.id}"
+
+    dimensions:
+      - name: id
+        sql: product_cost_id
+        type: number
+        primary_key: true
+        public: true
+
+      - name: product_id
+        sql: product_id
+        type: number
+
+      - name: unit_cost
+        sql: unit_cost
+        type: number
+
+      - name: effective_from
+        sql: effective_from
+        type: time
+
+      - name: effective_to
+        sql: effective_to
+        type: time
+
+      - name: is_current
+        sql: "(effective_to IS NULL)"
+        type: boolean
+        description: True if this row represents the currently effective cost.
+
+    measures:
+      - name: count
+        type: count
+
+      - name: avg_unit_cost
+        sql: unit_cost
+        type: avg
+        format: currency

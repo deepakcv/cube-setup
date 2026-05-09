@@ -1,0 +1,101 @@
+cubes:
+  - name: sales
+    sql_table: public.sales
+    description: |
+      Line-item granularity sales fact. Each row represents a single product
+      sold by a single salesman at a single point in time.
+
+    joins:
+      - name: salesmen
+        relationship: many_to_one
+        sql: "{CUBE.salesman_id} = {salesmen.id}"
+
+      - name: products
+        relationship: many_to_one
+        sql: "{CUBE.product_id} = {products.id}"
+
+    dimensions:
+      - name: id
+        sql: sale_id
+        type: number
+        primary_key: true
+        public: true
+
+      - name: salesman_id
+        sql: salesman_id
+        type: number
+
+      - name: product_id
+        sql: product_id
+        type: number
+
+      - name: sale_date
+        sql: sale_date
+        type: time
+        description: Timestamp of the sale; supports day, week, month, quarter, year granularities out of the box.
+
+      - name: quantity
+        sql: quantity
+        type: number
+
+      - name: unit_price
+        sql: unit_price
+        type: number
+
+      - name: unit_cost
+        sql: unit_cost
+        type: number
+
+      - name: discount_amount
+        sql: discount_amount
+        type: number
+
+      - name: total_amount
+        sql: total_amount
+        type: number
+
+      - name: was_discounted
+        sql: "(discount_amount > 0)"
+        type: boolean
+
+    measures:
+      - name: count
+        type: count
+        description: Number of line items sold.
+
+      - name: total_quantity
+        sql: quantity
+        type: sum
+        description: Total units sold across all line items.
+
+      - name: gross_revenue
+        sql: total_amount
+        type: sum
+        format: currency
+        description: Sum of (quantity * unit_price - discount_amount).
+
+      - name: total_discount
+        sql: discount_amount
+        type: sum
+        format: currency
+
+      - name: total_cost
+        sql: "quantity * unit_cost"
+        type: sum
+        format: currency
+
+      - name: gross_profit
+        sql: "total_amount - quantity * unit_cost"
+        type: sum
+        format: currency
+        description: Revenue net of discounts and snapshot product cost.
+
+      - name: avg_order_value
+        sql: total_amount
+        type: avg
+        format: currency
+
+      - name: profit_margin_pct
+        sql: "100.0 * SUM(total_amount - quantity * unit_cost) / NULLIF(SUM(total_amount), 0)"
+        type: number
+        description: Gross profit as a percentage of gross revenue.

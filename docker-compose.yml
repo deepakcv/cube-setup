@@ -1,0 +1,79 @@
+# Retail analytics stack: Postgres (system of record) + Cube (semantic layer).
+# Bring up:  docker compose up -d
+# Tear down: docker compose down -v   (the -v wipes the seeded database)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: retail-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-retail}
+      POSTGRES_USER: ${POSTGRES_USER:-retail}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required - copy .env.example to .env}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      # Bound to localhost only so the DB is never exposed beyond the host.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Mount the migrations tree read-only; init.sh runs from this path.
+      - ./migrations:/migrations:ro
+      # Postgres' official entrypoint executes anything in this directory
+      # exactly once, on a fresh data volume.
+      - ./migrations/init.sh:/docker-entrypoint-initdb.d/00-run-migrations.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - retail-net
+
+  cube:
+    image: cubejs/cube:v1.6.44
+    container_name: retail-cube
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${CUBE_PORT:-4000}:4000"
+      - "127.0.0.1:${CUBE_SQL_PORT:-15432}:15432"
+    environment:
+      CUBEJS_DEV_MODE: ${CUBEJS_DEV_MODE:-true}
+      CUBEJS_LOG_LEVEL: ${CUBEJS_LOG_LEVEL:-info}
+
+      # Datasource: Postgres on the internal docker network.
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: postgres
+      CUBEJS_DB_PORT: 5432
+      CUBEJS_DB_NAME: ${POSTGRES_DB:-retail}
+      CUBEJS_DB_USER: ${POSTGRES_USER:-retail}
+      CUBEJS_DB_PASS: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required - copy .env.example to .env}
+
+      # JWT signing secret (used in non-dev mode and for CLI-issued tokens).
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:?CUBEJS_API_SECRET is required - copy .env.example to .env}
+
+      # SQL API (Postgres wire protocol) – handy for BI tools.
+      CUBEJS_PG_SQL_PORT: 15432
+
+      # Restrict Cube to read-only meta+data+graphql scopes by default.
+      CUBEJS_DEFAULT_API_SCOPES: meta,data,graphql
+    volumes:
+      # Cube Store keeps its embedded metastore under /cube/conf/.cubestore,
+      # so this bind mount must be writable. The .cubestore directory is
+      # gitignored to keep runtime state out of the repo.
+      - ./cube:/cube/conf
+    networks:
+      - retail-net
+
+volumes:
+  postgres-data:
+    name: retail-postgres-data
+
+networks:
+  retail-net:
+    name: retail-net
+    driver: bridge

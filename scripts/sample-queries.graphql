@@ -1,0 +1,69 @@
+# Open Cube's GraphiQL playground at:
+#   http://localhost:4000/cubejs-api/graphql
+# Then paste any of the queries below.
+# All queries target the `sales_analytics` view defined in cube/model/views/.
+
+# 1. Daily revenue trend over the last 30 days
+{
+  cube(
+    where: { sales_analytics: { sale_date: { inDateRange: ["30 days ago", "today"] } } }
+    orderBy: { sales_analytics: { sale_date: asc } }
+  ) {
+    sales_analytics {
+      sale_date { day }
+      gross_revenue
+      gross_profit
+      total_quantity
+    }
+  }
+}
+
+# 2. Top 5 salesmen by revenue this quarter
+{
+  cube(
+    where: { sales_analytics: { sale_date: { inDateRange: "this quarter" } } }
+    orderBy: { sales_analytics: { gross_revenue: desc } }
+    limit: 5
+  ) {
+    sales_analytics {
+      salesmen_full_name
+      salesman_department_name
+      gross_revenue
+      gross_profit
+      profit_margin_pct
+    }
+  }
+}
+
+# 3. Department-level performance, current month
+{
+  cube(
+    where: { sales_analytics: { sale_date: { inDateRange: "this month" } } }
+    orderBy: { sales_analytics: { gross_revenue: desc } }
+  ) {
+    sales_analytics {
+      product_department_name
+      gross_revenue
+      gross_profit
+      total_quantity
+      avg_order_value
+    }
+  }
+}
+
+# 4. Top selling products, last 7 days
+{
+  cube(
+    where: { sales_analytics: { sale_date: { inDateRange: "last 7 days" } } }
+    orderBy: { sales_analytics: { total_quantity: desc } }
+    limit: 10
+  ) {
+    sales_analytics {
+      products_sku
+      products_name
+      product_department_name
+      total_quantity
+      gross_revenue
+    }
+  }
+}

@@ -1,0 +1,59 @@
+views:
+  - name: sales_analytics
+    description: |
+      Flat analytics view over sales joined to salesmen, products, and their
+      respective departments. Ideal for ad-hoc analytics and BI tools.
+
+    cubes:
+      - join_path: sales
+        includes:
+          - sale_date
+          - quantity
+          - unit_price
+          - unit_cost
+          - discount_amount
+          - total_amount
+          - was_discounted
+          - count
+          - total_quantity
+          - gross_revenue
+          - total_discount
+          - total_cost
+          - gross_profit
+          - avg_order_value
+          - profit_margin_pct
+
+      - join_path: sales.salesmen
+        prefix: true
+        includes:
+          - id
+          - full_name
+          - first_name
+          - last_name
+          - email
+          - hired_at
+          - is_active
+
+      # Custom prefix avoids the `id` / `name` clash with product_department.
+      - join_path: sales.salesmen.departments
+        prefix: true
+        alias: salesman_department
+        includes:
+          - id
+          - name
+
+      - join_path: sales.products
+        prefix: true
+        includes:
+          - id
+          - sku
+          - name
+          - unit_price
+          - is_active
+
+      - join_path: sales.products.departments
+        prefix: true
+        alias: product_department
+        includes:
+          - id
+          - name

@@ -1,0 +1,51 @@
+cubes:
+  - name: products
+    sql_table: public.products
+    description: Catalog of sellable items.
+
+    joins:
+      - name: departments
+        relationship: many_to_one
+        sql: "{CUBE.department_id} = {departments.id}"
+
+    dimensions:
+      - name: id
+        sql: product_id
+        type: number
+        primary_key: true
+        public: true
+
+      - name: sku
+        sql: sku
+        type: string
+
+      - name: name
+        sql: name
+        type: string
+
+      - name: description
+        sql: description
+        type: string
+
+      - name: department_id
+        sql: department_id
+        type: number
+
+      - name: unit_price
+        sql: unit_price
+        type: number
+
+      - name: is_active
+        sql: is_active
+        type: boolean
+
+    measures:
+      - name: count
+        type: count
+        description: Number of catalog products.
+
+      - name: avg_unit_price
+        sql: unit_price
+        type: avg
+        format: currency
+        description: Average current retail price across products.
